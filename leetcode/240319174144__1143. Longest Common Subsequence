@@ -1,0 +1,115 @@
+# -*- mode: Org; buffer-read-only: nil; org-download-image-dir: "img"-*-
+
+# local variables:
+# eval: (anki-editor-mode +1)
+# end:
+
+* 1143. Longest Common Subsequence
+:PROPERTIES:
+:ANKI_DECK: leetcode
+:ANKI_NOTE_TYPE: Basic
+:ANKI_TAGS: algorithm dynamic-programming
+:ANKI_NOTE_ID: 1710841294232
+:END:
+
+** Front
+
+[[https://leetcode.com/problems/longest-common-subsequence][1143. Longest Common Subsequence]]
+
+Given two strings text1 and text2, return the length of their longest common subsequence. If there is no common
+subsequence, return 0.
+
+A subsequence of a string is a new string generated from the original string with some characters (can be none)
+deleted without changing the relative order of the remaining characters.
+
+- For example, "ace" is a subsequence of "abcde".
+
+A common subsequence of two strings is a subsequence that is common to both strings.
+
+ 
+
+Example 1:
+
+
+Input: text1 = "abcde", text2 = "ace" 
+Output: 3  
+Explanation: The longest common subsequence is "ace" and its length is 3.
+
+Example 2:
+
+
+Input: text1 = "abc", text2 = "abc"
+Output: 3
+Explanation: The longest common subsequence is "abc" and its length is 3.
+
+Example 3:
+
+
+Input: text1 = "abc", text2 = "def"
+Output: 0
+Explanation: There is no such common subsequence, so the result is 0.
+
+ 
+
+Constraints:
+
+- 1 <= text1.length, text2.length <= 1000
+- text1 and text2 consist of only lowercase English characters.
+
+
+** Back
+
+dp[0][0] 表示 text1 和 text2 都为空时的最长公共子序列的长度，即 0。
+
+dp[i][0] 表示 text2 为空时的最长公共子序列的长度，即 0。
+
+dp[0][j] 表示 text1 为空时的最长公共子序列的长度，即 0。
+
+dp[i][j] 表示 text1 前 i 个字符和 text2 前 j 个字符的最长公共子序列的长度。
+
+当 text1[i] == text2[j] 时，dp[i][j] = dp[i-1][j-1] + 1
+
+当 text1[i] != text2[j] 时，dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+
+ 
+*** 递归实现，从字符串的末尾开始比较
+
+#+begin_src go
+package main
+
+import (
+	"fmt"
+)
+
+func longestCommonSubsequence(text1 string, text2 string) int {
+	i, j := len(text1), len(text2)
+	memo := make([][]int, i+1)
+	for row := range memo {
+		memo[row] = make([]int, j+1)
+	}
+	var helper func(i, j int) int
+	helper = func(i, j int) int {
+		if i == 0 || j == 0 {
+			return 0
+		}
+		if memo[i][j] != 0 {
+			return memo[i][j]
+		}
+		if text1[i-1] == text2[j-1] {
+			memo[i][j] = 1 + helper(i-1, j-1)
+			return memo[i][j]
+		}
+		memo[i][j] = max(helper(i-1, j), helper(i, j-1))
+		return memo[i][j]
+	}
+	return helper(i, j)
+}
+
+func main() {
+	fmt.Println(longestCommonSubsequence("abcde", "ace"))
+	fmt.Println(longestCommonSubsequence("abc", "abc"))
+	fmt.Println(longestCommonSubsequence("abc", "def"))
+}
+#+end_src
+
+*** TODO 动态规划实现

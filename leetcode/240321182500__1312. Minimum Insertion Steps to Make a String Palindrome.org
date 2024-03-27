@@ -1,0 +1,117 @@
+# -*- mode: Org; buffer-read-only: nil; org-download-image-dir: "img"-*-
+
+# local variables:
+# eval: (anki-editor-mode +1)
+# end:
+
+
+* 1312. Minimum Insertion Steps to Make a String Palindrome
+:PROPERTIES:
+:ANKI_DECK: leetcode
+:ANKI_NOTE_TYPE: Basic
+:ANKI_TAGS: algorithm dynamic-programming
+:ANKI_NOTE_ID: 1711016749415
+:END:
+
+** Front
+
+[[https://leetcode.com/problems/minimum-insertion-steps-to-make-a-string-palindrome/][1312. Minimum Insertion Steps to Make a String Palindrome]]
+
+Given a string s. In one step you can insert any character at any index of the
+string.
+
+Return the minimum number of steps to make s palindrome.
+
+A Palindrome String is one that reads the same backward as well as forward.
+
+ 
+
+Example 1:
+
+
+Input: s = "zzazz"
+Output: 0
+Explanation: The string "zzazz" is already palindrome we do not need any insertions.
+
+Example 2:
+
+
+Input: s = "mbadm"
+Output: 2
+Explanation: String can be "mbdadbm" or "mdbabdm".
+
+Example 3:
+
+
+Input: s = "leetcode"
+Output: 5
+Explanation: Inserting 5 characters the string becomes "leetcodocteel".
+
+ 
+
+Constraints:
+
+- 1 <= s.length <= 500
+- s consists of lowercase English letters.
+
+
+** Back
+
+dp 中的索引都表示第 x 个字符，而不是 s 的索引
+
+
+定义 dp[i][j] 为 s 第 i 个字符到第 j 个字段之间的最小插入次数。（含第 i 个字符和第 j 个字符）
+
+如果 s[i-1] == s[j-1]，那么 dp[i][j] = dp[i + 1][j - 1]。
+
+否则，
+
+- 在 s[i-1] 处插入一个字符使 s[i-1] == s[j-1]，此时检查 第 i+1 个字符到第 j 个字符之间的最小插入次数
+
+- s[j-1] 处插入一个字符使 s[i-1] == s[j-1]，此时检查 第 i 个字符到第 j-1 个字符之间的最小插入次数
+
+因此，dp[i][j] = min(dp[i + 1][j], dp[i][j - 1]) + 1
+
+为什么当 i >= j 时 dp[i][j] = 0 ？
+
+因为当 i >= j 时，s[i-1] 和 s[j-1] 之间没有字符，所以不需要插入字符。
+
+#+begin_src go
+package main
+
+import "fmt"
+
+func minimumInsertionStepsToMakeAStringPalindrome(s string) int {
+	memo := make([][]int, len(s)+1)
+	for i := range memo {
+		memo[i] = make([]int, len(s)+1)
+		for j := range memo[i] {
+			memo[i][j] = -1
+		}
+	}
+	var helper func(i, j int) int
+	helper = func(i, j int) int {
+		if i >= j {
+			return 0
+		}
+		if memo[i][j] != -1 {
+			return memo[i][j]
+		}
+		if s[i-1] == s[j-1] {
+			memo[i][j] = helper(i+1, j-1)
+		} else {
+			memo[i][j] = 1 + min(helper(i+1, j), helper(i, j-1))
+		}
+		return memo[i][j]
+	}
+	return helper(1, len(s))
+}
+
+func main() {
+	fmt.Println(minimumInsertionStepsToMakeAStringPalindrome("zzazz"))
+	fmt.Println(minimumInsertionStepsToMakeAStringPalindrome("mbadm"))
+	fmt.Println(minimumInsertionStepsToMakeAStringPalindrome("leetcode"))
+}
+#+end_src
+
+另外，可以参考 516. Longest Palindromic Subsequence ，s 的长度减去最长回文子序列的长度就是最小插入次数。

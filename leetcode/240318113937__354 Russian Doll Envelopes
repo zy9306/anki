@@ -1,0 +1,198 @@
+# -*- mode: Org; buffer-read-only: nil; org-download-image-dir: "img"-*-
+
+# local variables:
+# eval: (anki-editor-mode +1)
+# end:
+
+* 354 Russian Doll Envelopes
+:PROPERTIES:
+:ANKI_DECK: leetcode
+:ANKI_NOTE_TYPE: Basic
+:ANKI_TAGS: algorithm dynamic-programming
+:ANKI_NOTE_ID: 1710733173908
+:END:
+
+** Front
+
+[[https://leetcode.com/problems/russian-doll-envelopes][354 Russian Doll Envelopes]]
+
+You are given a 2D array of integers envelopes where envelopes[i] = [wi, hi]
+represents the width and the height of an envelope.
+
+One envelope can fit into another if and only if both the width and height of one
+envelope are greater than the other envelope's width and height.
+
+Return the maximum number of envelopes you can Russian doll (i.e., put one inside
+the other).
+
+Note: You cannot rotate an envelope.
+
+ 
+
+Example 1:
+
+
+Input: envelopes = [[5,4],[6,4],[6,7],[2,3]]
+Output: 3
+Explanation: The maximum number of envelopes you can Russian doll is 3 ([2,3] => [5,4] => [6,7]).
+
+Example 2:
+
+
+Input: envelopes = [[1,1],[1,1],[1,1]]
+Output: 1
+
+
+Constraints:
+
+- 1 <= envelopes.length <= 10^5
+- envelopes[i].length == 2
+- 1 <= wi, hi <= 10^5
+
+
+
+** Back
+
+对 envelopes 的元素 e 进行排序，先按 e[0] 升序，如果 e[0] 相同，按 e[1] 降序
+
+#+begin_src
+2,3
+5,4
+6,7
+6,4
+#+end_src
+
+第二列的最长递增子序列就是结果
+
+为什么 e[1] 要降序？如果升序，那么会取到 [[6,4], [6,7]] 这个序列，e[0] 相同是无法放入的
+
+
+*** 返回最大子序列的长度
+
+#+begin_src go
+package main
+
+import (
+	"fmt"
+	"sort"
+
+	"golang.org/x/exp/constraints"
+)
+
+func max[T constraints.Integer](input ...T) T {
+	rv := input[0]
+	for _, v := range input {
+		if v > rv {
+			rv = v
+		}
+	}
+	return rv
+}
+
+func maxEnvelopes(envelopes [][]int) int {
+	sort.Slice(envelopes, func(i, j int) bool {
+		if envelopes[i][0] == envelopes[j][0] {
+			return envelopes[i][1] > envelopes[j][1]
+		}
+		return envelopes[i][0] < envelopes[j][0]
+	})
+
+	dp := make([]int, len(envelopes))
+	for i := range dp {
+		dp[i] = 1
+	}
+	for i := 0; i < len(envelopes); i++ {
+		for j := 0; j < i; j++ {
+			if envelopes[i][1] > envelopes[j][1] {
+				dp[i] = max(dp[i], dp[j]+1)
+			}
+		}
+	}
+	return max(dp...)
+}
+
+func main() {
+	envelopes := [][]int{{5, 4}, {6, 4}, {6, 7}, {2, 3}}
+	fmt.Println(maxEnvelopes(envelopes))
+
+	envelopes = [][]int{{1, 1}, {1, 1}, {1, 1}}
+	fmt.Println(maxEnvelopes(envelopes))
+}
+#+end_src
+
+
+*** 返回具体的子序列
+
+- dp 数组用来记录到当前位置最多可以嵌套的信封数量
+- prev 数组用来记录当前位置的信封是由哪个位置的信封嵌套而来的
+
+maxVal, maxIdx 是为了从 dp 数组中找出最大值所在的位置，然后从这个位置开始，依次回溯 prev 数组，得到可以嵌套的信封序列
+
+#+begin_src go
+package main
+
+import (
+	"fmt"
+	"sort"
+
+	"golang.org/x/exp/constraints"
+)
+
+func max[T constraints.Integer](input ...T) T {
+	rv := input[0]
+	for _, v := range input {
+		if v > rv {
+			rv = v
+		}
+	}
+	return rv
+}
+
+func maxEnvelopes(envelopes [][]int) [][]int {
+	sort.Slice(envelopes, func(i, j int) bool {
+		if envelopes[i][0] == envelopes[j][0] {
+			return envelopes[i][1] > envelopes[j][1]
+		}
+		return envelopes[i][0] < envelopes[j][0]
+	})
+
+	dp := make([]int, len(envelopes))
+	prev := make([]int, len(envelopes))
+	for i := range dp {
+		dp[i] = 1
+		prev[i] = -1
+	}
+	maxVal, maxIdx := 0, -1
+	for i := 0; i < len(envelopes); i++ {
+		for j := 0; j < i; j++ {
+			if envelopes[i][1] > envelopes[j][1] {
+				if newMax := max(dp[i], dp[j]+1); newMax > dp[i] {
+					dp[i] = newMax
+					prev[i] = j
+				}
+			}
+		}
+		if dp[i] > maxVal {
+			maxVal = dp[i]
+			maxIdx = i
+		}
+	}
+	res := make([][]int, 0, maxVal)
+	for maxIdx != -1 {
+		res = append(res, envelopes[maxIdx])
+		maxIdx = prev[maxIdx]
+	}
+	for i := 0; i < len(res)/2; i++ {
+		res[i], res[len(res)-1-i] = res[len(res)-1-i], res[i]
+	}
+	return res
+}
+
+func main() {
+	envelopes := [][]int{{5, 4}, {6, 4}, {6, 7}, {2, 3}}
+	fmt.Println(maxEnvelopes(envelopes))
+
+	envelopes = [][]int{{1, 1}, {1, 1}, {1, 1}}
+	fmt.Println(maxEnvelopes(envelopes))
+}
+#+end_src

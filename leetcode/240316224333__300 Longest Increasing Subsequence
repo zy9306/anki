@@ -1,0 +1,111 @@
+# -*- mode: Org; buffer-read-only: nil; org-download-image-dir: "img"-*-
+
+# local variables:
+# eval: (anki-editor-mode +1)
+# end:
+
+* 300  Longest Increasing Subsequence.org
+:PROPERTIES:
+:ANKI_DECK: leetcode
+:ANKI_NOTE_TYPE: Basic
+:ANKI_TAGS: algorithm dynamic-programming
+:ANKI_NOTE_ID: 1710599802607
+:END:
+
+** Front
+
+[[https://leetcode.com/problems/longest-increasing-subsequence/description/][300  Longest Increasing Subsequence.org]]
+
+
+Given an integer array nums, return the length of the longest strictly increasing subsequence.
+
+ 
+
+Example 1:
+
+
+Input: nums = [10,9,2,5,3,7,101,18]
+Output: 4
+Explanation: The longest increasing subsequence is [2,3,7,101], therefore the length is 4.
+
+Example 2:
+
+
+Input: nums = [0,1,0,3,2,3]
+Output: 4
+
+Example 3:
+
+
+Input: nums = [7,7,7,7,7,7,7]
+Output: 1
+
+
+Constraints:
+
+- 1 <= nums.length <= 2500
+- -10^4 <= nums[i] <= 10^4
+
+
+
+** Back
+
+定义 dp[i] 为 num[i] 结尾的最长递增子序列的长度
+
+已知 dp[0] 为 1
+
+以下解法中，对于每个 j，如果 num[j] < num[i]，都有一个 dp[i] 其值为 dp[j] + 1
+
+由于每个 dp[j] 的大小不确定，所以从所有可能的 dp[i] 中取最大值
+
+（possible 只是为了便于理解，实际上只要每次 for j 时比出 dp[i] 和 dp[j] + 1 的最大值即可）
+
+#+begin_src go
+package main
+
+import (
+	"fmt"
+
+	"golang.org/x/exp/constraints"
+)
+
+func max[T constraints.Integer](input ...T) T {
+	rv := input[0]
+	for _, v := range input {
+		if v > rv {
+			rv = v
+		}
+	}
+	return rv
+}
+
+func lengthOfLIS(nums []int) int {
+	dp := make([]int, len(nums))
+	for i := range dp {
+		dp[i] = 1
+	}
+	for i := 0; i < len(nums); i++ {
+		possible := make([]int, 0, i)
+		for j := 0; j < i; j++ {
+			if nums[i] > nums[j] {
+				possible = append(possible, dp[j]+1)
+			}
+		}
+		if len(possible) > 0 {
+			dp[i] = max(possible...)
+		}
+	}
+	result := 0
+	for _, i := range dp {
+		result = max(result, i)
+	}
+	return result
+}
+
+func main() {
+	nums := []int{10, 9, 2, 5, 3, 7, 101, 18}
+	fmt.Println(lengthOfLIS(nums))
+}
+#+end_src
+
+TODO 二分搜索解法
