@@ -1,0 +1,113 @@
+# -*- mode: Org; buffer-read-only: nil; org-download-image-dir: "img"-*-
+
+# local variables:
+# eval: (anki-editor-mode +1)
+# end:
+
+* 174. Dungeon Game
+:PROPERTIES:
+:ANKI_DECK: leetcode
+:ANKI_NOTE_TYPE: Basic
+:ANKI_TAGS: algorithm dynamic-programming
+:ANKI_NOTE_ID: 1711534867296
+:END:
+
+** Front
+
+[[https://leetcode.com/problems/dungeon-game][174. Dungeon Game]]
+
+恶魔们抓住了公主并将她关在了地下城 dungeon 的 右下角 。地下城是由 m x n 个房间组成的二维网格。我们英勇的骑士最初被安置在 左上角 的房间里，他必须穿过地下城并通过对抗恶魔来拯救公主。
+
+骑士的初始健康点数为一个正整数。如果他的健康点数在某一时刻降至 0 或以下，他会立即死亡。
+
+有些房间由恶魔守卫，因此骑士在进入这些房间时会失去健康点数（若房间里的值为负整数，则表示骑士将损失健康点数）；其他房间要么是空的（房间里的值为 0），要么包含增加骑士健康点数的魔法球（若房间里的值为正整数，则表示骑士将增加健康点数）。
+
+为了尽快解救公主，骑士决定每次只 向右 或 向下 移动一步。
+
+返回确保骑士能够拯救到公主所需的最低初始健康点数。
+
+注意：任何房间都可能对骑士的健康点数造成威胁，也可能增加骑士的健康点数，包括骑士进入的左上角房间以及公主被监禁的右下角房间。
+
+示例 1：
+
+#+DOWNLOADED: screenshot @ 2024-03-27 16:32:12
+[[file:img/2024-03-27_16-32-12_screenshot.png]]
+
+输入：dungeon = [[-2,-3,3],[-5,-10,1],[10,30,-5]]
+输出：7
+解释：如果骑士遵循最佳路径：右 -> 右 -> 下 -> 下 ，则骑士的初始健康点数至少为 7 。
+
+
+示例 2：
+
+输入：dungeon = [[0],]
+输出：1
+
+
+提示：
+- m == dungeon.length
+- n == dungeon[i].length
+- 1 <= m, n <= 200
+- -1000 <= dungeon[i][j] <= 1000
+
+
+** Back
+
+假设定义 dp[i][j] 为 从左上角走到第 i 行第 j 列需要的最小生命值，那么
+
+- dp[0][0] = 0,
+- dp[1][1] = 1 if grid[0][0] >= 0 else 1 - grid[0][0]
+
+dp[i][j] 能否由 dp[i-1][j] 或 dp[i][j-1] 推导出来呢？
+
+不行，因为根据定义，只知道走到 grip[i-2][j-1] 或 grip[i-1][j-2] 时的最小生命值，但是不知道这个点的生命值是多少。
+
+想求 dp[i][j] 还依赖于前面的生命值。
+
+反过来，我们定义 dp[i][j] 为从 grip[i-1][j-1] 走到右下角需要的最小生命值，那么
+
+- dp[i+1][j] 为从 grip[i][j-1] 走到右下角需要的最小生命值
+- dp[i][j+1] 为从 grip[i-1][j] 走到右下角需要的最小生命值
+
+所以 dp[i][j] = min(dp[i+1][j], dp[i][j+1]) - grid[i][j]
+
+base case: dp[m][n] = 1 - grid[m-1][n-1] if dp[m-1][n-1] <= 0 else 1
+
+#+begin_src go
+package main
+
+import "fmt"
+
+func calculateMinimumHP(grid [][]int) int {
+	m, n := len(grid), len(grid[0])
+	memo := make([][]int, m+1)
+	for i := range memo {
+		memo[i] = make([]int, n+1)
+	}
+	var helper func(i, j int) int
+	helper = func(i, j int) int {
+		if i == m && j == n {
+			return max(1, 1-grid[i-1][j-1])
+		}
+		if i > m || j > n {
+			return 1 << 31
+		}
+
+		res := min(helper(i+1, j), helper(i, j+1)) - grid[i-1][j-1]
+		if res <= 0 {
+			memo[i][j] = 1
+			return memo[i][j]
+		}
+		memo[i][j] = res
+		return memo[i][j]
+	}
+	return helper(1, 1)
+}
+
+func main() {
+	fmt.Println(calculateMinimumHP([][]int{{-2, -3, 3}, {-5, -10, 1}, {10, 30, -5}}))
+	fmt.Println(calculateMinimumHP([][]int{{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}))
+	fmt.Println(calculateMinimumHP([][]int{{0}}))
+}
+#+end_src
+

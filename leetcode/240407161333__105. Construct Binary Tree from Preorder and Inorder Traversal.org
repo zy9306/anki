@@ -1,0 +1,85 @@
+# -*- mode: Org; buffer-read-only: nil; org-download-image-dir: "img"-*-
+
+# local variables:
+# eval: (anki-editor-mode +1)
+# end:
+
+* 105. Construct Binary Tree from Preorder and Inorder Traversal
+:PROPERTIES:
+:ANKI_DECK: leetcode
+:ANKI_NOTE_TYPE: Basic
+:ANKI_TAGS: algorithm tree
+:ANKI_NOTE_ID: 1713253912102
+:END:
+
+** Front
+
+[[https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/][105. Construct Binary Tree from Preorder and Inorder Traversal]]
+
+
+给定两个整数数组 preorder 和 inorder ，其中 preorder 是二叉树的先序遍历， inorder 是同一棵树的中序遍历，请构造二叉树并返回其根节点。
+
+示例 1:
+
+
+#+DOWNLOADED: screenshot @ 2024-04-07 16:16:50
+[[file:img/2024-04-07_16-16-50_screenshot.png]]
+
+输入: preorder = [3,9,20,15,7], inorder = [9,3,15,20,7]
+输出: [3,9,20,null,null,15,7]
+
+
+示例 2:
+
+输入: preorder = [-1], inorder = [-1]
+输出: [-1]
+
+提示:
+
+- 1 <= preorder.length <= 3000
+- inorder.length == preorder.length
+- -3000 <= preorder[i], inorder[i] <= 3000
+- preorder 和 inorder 均 无重复 元素
+- inorder 均出现在 preorder
+- preorder 保证 为二叉树的前序遍历序列
+- inorder 保证 为二叉树的中序遍历序列
+
+
+
+** Back
+
+root = preorder[0] 即 3
+
+根据 inorder，left = [9]，right = [15, 20, 7]
+
+结合 preorder，可以知道 left 的前序为 [9]，
+
+right 的前序为 [20, 15, 7]
+
+#+begin_src go
+func buildTree(preOrder, inOrder []int) *TreeNode {
+	preOrderIndexMap := make(map[int]int)
+	inOrderIndexMap := make(map[int]int)
+	for i, v := range preOrder {
+		preOrderIndexMap[v] = i
+	}
+	for i, v := range inOrder {
+		inOrderIndexMap[v] = i
+	}
+	var build func(preStart, preEnd, InStart, InEnd int) *TreeNode
+	build = func(preStart, preEnd, InStart, InEnd int) *TreeNode {
+		if preStart > preEnd {
+			return nil
+		}
+		root := &TreeNode{Val: preOrder[preStart]}
+		rootIndex := inOrderIndexMap[root.Val]
+		leftSize := rootIndex - InStart
+		root.Left = build(preStart+1, preStart+leftSize, InStart, rootIndex-1)
+		root.Right = build(preStart+leftSize+1, preEnd, rootIndex+1, InEnd)
+		return root
+	}
+	return build(0, len(preOrder)-1, 0, len(inOrder)-1)
+}
+#+end_src
+
+

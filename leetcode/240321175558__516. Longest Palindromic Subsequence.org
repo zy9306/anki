@@ -1,0 +1,98 @@
+# -*- mode: Org; buffer-read-only: nil; org-download-image-dir: "img"-*-
+
+# local variables:
+# eval: (anki-editor-mode +1)
+# end:
+
+
+* 516. Longest Palindromic Subsequence
+:PROPERTIES:
+:ANKI_DECK: leetcode
+:ANKI_NOTE_TYPE: Basic
+:ANKI_TAGS: algorithm dynamic-programming
+:ANKI_NOTE_ID: 1711008578046
+:END:
+
+** Front
+
+[[https://leetcode.com/problems/longest-palindromic-subsequence][516. Longest Palindromic Subsequence]]
+
+Given a string s, find the longest palindromic subsequence's length in s.
+
+A subsequence is a sequence that can be derived from another sequence by deleting some or no elements without
+changing the order of the remaining elements.
+
+ 
+
+Example 1:
+
+
+Input: s = "bbbab"
+Output: 4
+Explanation: One possible longest palindromic subsequence is "bbbb".
+
+Example 2:
+
+
+Input: s = "cbbd"
+Output: 2
+Explanation: One possible longest palindromic subsequence is "bb".
+
+ 
+
+Constraints:
+
+- 1 <= s.length <= 1000
+- s consists only of lowercase English letters.
+
+** Back
+
+dp[i][j] 为 s 第 i 个字符到第 j 个字符的最长回文子序列的长度。
+
+- 当 i == j 时，dp[i][j] = 1
+- 当 i < j 时
+  - s[i-1] == s[j-1]，dp[i][j] = dp[i+1][j-1] + 2
+  - s[i-1] != s[j-1]，dp[i][j] = max(dp[i+1][j], dp[i][j-1])
+
+
+#+begin_src go
+package main
+
+import "fmt"
+
+func longestPalindromicSubsequence(s string) int {
+	memo := make([][]int, len(s)+1)
+	for i := range memo {
+		memo[i] = make([]int, len(s)+1)
+		for j := range memo[i] {
+			memo[i][j] = -1
+		}
+	}
+	var helper func(i, j int) int
+	helper = func(i, j int) int {
+		if i == j {
+			return 1
+		}
+		if i > j {
+			return 0
+		}
+		if memo[i][j] != -1 {
+			return memo[i][j]
+		}
+		if s[i-1] == s[j-1] {
+			memo[i][j] = 2 + helper(i+1, j-1)
+			return memo[i][j]
+		}
+		memo[i][j] = max(helper(i+1, j), helper(i, j-1))
+		return memo[i][j]
+	}
+	// 为了和 dp[i][j] 定义一致，这里从 1 开始
+	return helper(1, len(s))
+}
+
+func main() {
+	fmt.Println(longestPalindromicSubsequence("bbbab"))
+	fmt.Println(longestPalindromicSubsequence("cbbd"))
+}
+#+end_src
+

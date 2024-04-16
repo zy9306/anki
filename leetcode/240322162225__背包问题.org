@@ -1,0 +1,97 @@
+# -*- mode: Org; buffer-read-only: nil; org-download-image-dir: "img"-*-
+
+# local variables:
+# eval: (anki-editor-mode +1)
+# end:
+
+
+* 背包问题
+:PROPERTIES:
+:ANKI_DECK: leetcode
+:ANKI_NOTE_TYPE: Basic
+:ANKI_TAGS: algorithm dynamic-programming
+:ANKI_NOTE_ID: 1711098756431
+:END:
+
+** Front
+
+背包问题
+
+有一个可载重为 W 的背包和 N 个物品，第 i 个物品的重量是 wt[i-1]，价值是 val[i-1]。问可以装入背包的最大价值是多少？
+
+例：
+
+N = 3, W = 4, wt = [2, 1, 3], val = [4, 2, 3]
+
+** Back
+
+确定状态和选择
+
+状态：
+- 背包的容量
+- 可选择的物品
+
+选择：
+- 选择装入第 i 个物品
+- 选择不装入第 i 个物品
+
+dp 数组的定义：
+
+dp[i][w] 表示前 i 个物品，背包容量为 w 时，可以装入背包的最大价值。
+
+要求的最终答案是 dp[N][W]。
+
+Base Case：
+
+- dp[0][..] = 0
+- dp[..][0] = 0
+
+如果选择装入第 i 个物品，dp[i][w] = dp[i-1][w-wt[i-1]] + val[i-1]。
+
+如果选择不装入第 i 个物品，dp[i][w] = dp[i-1][w]。
+
+
+*** 递归解法
+
+#+begin_src go
+package main
+
+import "fmt"
+
+func bagProblem(wt []int, val []int, W int) int {
+	N := len(wt)
+	memo := make([][]int, N+1)
+	for i := range memo {
+		memo[i] = make([]int, W+1)
+	}
+	var helper func(i, w int) int
+	helper = func(i, w int) int {
+		if memo[i][w] != 0 {
+			return memo[i][w]
+		}
+		if i == 0 || w == 0 {
+			return 0
+		}
+		if wt[i-1] > w {
+			memo[i][w] = helper(i-1, w)
+			return memo[i][w]
+		} else {
+			memo[i][w] = max(val[i-1]+helper(i-1, w-wt[i-1]), helper(i-1, w))
+			return memo[i][w]
+		}
+	}
+	return helper(N, W)
+}
+
+func main() {
+	wt := []int{2, 1, 3}
+	val := []int{4, 2, 3}
+	W := 4
+	fmt.Println(bagProblem(wt, val, W))
+
+	wt = []int{1, 1, 1}
+	val = []int{1, 2, 3}
+	W = 2
+	fmt.Println(bagProblem(wt, val, W))
+}
+#+end_src

@@ -1,0 +1,110 @@
+# -*- mode: Org; buffer-read-only: nil; org-download-image-dir: "img"-*-
+
+# local variables:
+# eval: (anki-editor-mode +1)
+# end:
+
+
+* 53 Maximum Subarray
+:PROPERTIES:
+:ANKI_DECK: leetcode
+:ANKI_NOTE_TYPE: Basic
+:ANKI_TAGS: algorithm dynamic-programming
+:ANKI_NOTE_ID: 1710770391689
+:END:
+
+** Front
+
+[[https://leetcode.com/problems/maximum-subarray][53 Maximum Subarray]]
+
+Given an integer array nums, find the subarray with the largest sum, and return its
+sum.
+
+ 
+
+Example 1:
+
+
+Input: nums = [-2,1,-3,4,-1,2,1,-5,4]
+Output: 6
+Explanation: The subarray [4,-1,2,1] has the largest sum 6.
+
+Example 2:
+
+
+Input: nums = [1]
+Output: 1
+Explanation: The subarray [1] has the largest sum 1.
+
+Example 3:
+
+
+Input: nums = [5,4,-1,7,8]
+Output: 23
+Explanation: The subarray [5,4,-1,7,8] has the largest sum 23.
+
+
+Constraints:
+
+- 1 <= nums.length <= 105
+- -104 <= nums[i] <= 104
+
+ 
+
+Follow up: If you have figured out the O(n) solution, try coding another solution using the divide and conquer
+approach, which is more subtle.
+
+
+** Back
+
+定义 dp[i] 为 num[i] 结尾的最大子数组和
+
+由于 dp[i] 包含 num[i]，所以 dp[i] 为 max(d[i-1] + num[i], num[i])
+
+
+#+begin_src go
+package main
+
+import (
+	"fmt"
+
+	"golang.org/x/exp/constraints"
+)
+
+func max[T constraints.Integer](input ...T) T {
+	rv := input[0]
+	for _, v := range input {
+		if v > rv {
+			rv = v
+		}
+	}
+	return rv
+}
+
+func maxSubarray(nums []int) int {
+	dp := make([]int, len(nums))
+	dp[0] = nums[0]
+	maxSum := dp[0]
+	for i := 1; i < len(nums); i++ {
+		dp[i] = max(nums[i], dp[i-1]+nums[i])
+		maxSum = max(maxSum, dp[i])
+	}
+	return maxSum
+}
+
+func main() {
+	nums := []int{-2, 1, -3, 4, -1, 2, 1, -5, 4}
+	fmt.Println(maxSubarray(nums))
+
+	nums = []int{1}
+	fmt.Println(maxSubarray(nums))
+
+	nums = []int{5, 4, -1, 7, 8}
+	fmt.Println(maxSubarray(nums))
+}
+#+end_src
+
+TODO
+
+- 前缀和求解
+- 优化复杂度到 O(NlogN)

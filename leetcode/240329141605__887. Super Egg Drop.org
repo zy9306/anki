@@ -1,0 +1,139 @@
+# -*- mode: Org; buffer-read-only: nil; org-download-image-dir: "img"-*-
+
+# local variables:
+# eval: (anki-editor-mode +1)
+# end:
+
+* 887. Super Egg Drop
+:PROPERTIES:
+:ANKI_DECK: leetcode
+:ANKI_NOTE_TYPE: Basic
+:ANKI_TAGS: algorithm dynamic-programming
+:ANKI_NOTE_ID: 1711699028954
+:END:
+
+** Front
+
+[[https://leetcode.com/problems/super-egg-drop/description/][887. Super Egg Drop]]
+
+给你 k 枚相同的鸡蛋，并可以使用一栋从第 1 层到第 n 层共有 n 层楼的建筑。
+
+已知存在楼层 f ，满足 0 <= f <= n ，任何从 高于 f 的楼层落下的鸡蛋都会碎，从 f 楼层或比它低的楼层落下的鸡蛋都不会破。
+
+每次操作，你可以取一枚没有碎的鸡蛋并把它从任一楼层 x 扔下（满足 1 <= x <= n）。如果鸡蛋碎了，你就不能再次使用它。如果某枚鸡蛋扔下后没有摔碎，则可以在之后的操作中 重复使用 这枚鸡蛋。
+
+请你计算并返回要确定 f 确切的值 的 最小操作次数 是多少？
+
+示例 1：
+
+输入：k = 1, n = 2
+输出：2
+解释：
+鸡蛋从 1 楼掉落。如果它碎了，肯定能得出 f = 0 。
+否则，鸡蛋从 2 楼掉落。如果它碎了，肯定能得出 f = 1 。
+如果它没碎，那么肯定能得出 f = 2 。
+因此，在最坏的情况下我们需要移动 2 次以确定 f 是多少。
+
+示例 2：
+
+输入：k = 2, n = 6
+输出：3
+
+示例 3：
+
+输入：k = 3, n = 14
+输出：4
+
+
+提示：
+- 1 <= k <= 100
+- 1 <= n <= 104
+
+** Back
+
+假设只有一个鸡蛋，那么只能从第一层开始一层一层的试，最坏情况下需要试 n 次，要确定楼层 f，所以至少要扔 n 次。
+
+确定状态和选择
+
+状态：当前拥有的鸡蛋数 k 和需要测试的楼层数 n
+
+选择：在第几层扔鸡蛋
+
+定义 dp[k][n]：当前有 k 个鸡蛋，面对 n 层楼，最少需要扔几次
+
+从第 i 层扔下鸡蛋，会出现两种情况：
+
+- 如果鸡蛋碎了，那么鸡蛋数 k-1 ，楼层数变成 i-1，即 dp[k][n] = dp[k-1][i-1] + 1
+- 如果鸡蛋没碎，那么鸡蛋数 k 不变，楼层数变成 n-i，即 dp[k][n] = dp[k][n-i] + 1
+
+对于 dp[k][n]，我们要穷举
+
+- 从第 1 层扔下鸡蛋
+- 从第 2 层扔下鸡蛋
+- ...
+- 从第 n 层扔下鸡蛋
+
+每种情况的最坏值，再取这些最坏值的最小值
+
+最坏值就是每次试到只有一个鸡蛋了，或者试到楼层数为 0 了为止。
+
+
+伪代码：
+
+#+begin_src
+res = inf
+for 1 <= i <= n:
+    res = min(res, max(dp[k-1][i-1], dp[k][n-i]) + 1)
+#+end_src
+
+边界条件：
+
+k = 1，结果为 n，即只有一个鸡蛋，只能一层一层的试，最坏结果就是剩余楼层数
+n = 0，结果为 0，即楼层数为 0，不需要扔鸡蛋
+
+#+begin_src go
+package main
+
+import "fmt"
+
+// K: 鸡蛋数, N: 楼层数
+func superEggDrop(K, N int) int {
+	memo := make([][]int, K+1)
+	for i := range memo {
+		memo[i] = make([]int, N+1)
+	}
+	// k: 鸡蛋数, n: 楼层数
+	var helper func(k, n int) int
+	helper = func(k, n int) int {
+		if k == 1 {
+			return n
+		}
+		if n == 0 {
+			return 0
+		}
+		if memo[k][n] != 0 {
+			return memo[k][n]
+		}
+		res := 1<<31 - 1
+		for i := 1; i <= n; i++ {
+			// 碎了, 鸡蛋数减一, 楼层数减一
+			// 没碎, 鸡蛋数不变, 楼层数减一
+			// 两种情况取最大值
+			res = min(res, max(helper(k-1, i-1), helper(k, n-i))+1)
+		}
+		memo[k][n] = res
+		return res
+	}
+	return helper(K, N)
+}
+
+func main() {
+	fmt.Println(superEggDrop(1, 2))
+	fmt.Println(superEggDrop(2, 6))
+	fmt.Println(superEggDrop(3, 14))
+}
+
+#+end_src
+
+
+*** TODO 二分查找优化

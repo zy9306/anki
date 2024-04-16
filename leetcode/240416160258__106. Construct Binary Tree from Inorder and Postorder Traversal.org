@@ -1,0 +1,77 @@
+# -*- mode: Org; buffer-read-only: nil; org-download-image-dir: "img"-*-
+
+# local variables:
+# eval: (anki-editor-mode +1)
+# end:
+
+* 106. Construct Binary Tree from Inorder and Postorder Traversal
+:PROPERTIES:
+:ANKI_DECK: leetcode
+:ANKI_NOTE_TYPE: Basic
+:ANKI_TAGS: algorithm tree
+:ANKI_NOTE_ID: 1713255401141
+:END:
+
+** Front
+
+[[https://leetcode.com/problems/construct-binary-tree-from-inorder-and-postorder-traversal][106. Construct Binary Tree from Inorder and Postorder Traversal]]
+
+给定两个整数数组 inorder 和 postorder ，其中 inorder 是二叉树的中序遍历， postorder 是同一棵树的后序遍历，请你构造并返回这颗 二叉树 。
+
+示例 1:
+
+
+#+DOWNLOADED: screenshot @ 2024-04-16 16:05:30
+[[file:img/2024-04-16_16-05-30_screenshot.png]]
+
+输入：inorder = [9,3,15,20,7], postorder = [9,15,7,20,3]
+输出：[3,9,20,null,null,15,7]
+
+示例 2:
+输入：inorder = [-1], postorder = [-1]
+输出：[-1]
+
+提示:
+
+- 1 <= inorder.length <= 3000
+- postorder.length == inorder.length
+- -3000 <= inorder[i], postorder[i] <= 3000
+- inorder 和 postorder 都由 不同 的值组成
+- postorder 中每一个值都在 inorder 中
+- inorder 保证是树的中序遍历
+- postorder 保证是树的后序遍历
+
+
+** Back
+
+由 postorder 可知 root=3，再由 inorder 可知左子树的中序为 [9]，右子树的中序为 [15, 20, 7]。
+
+左子树后序遍历为 [9]，右子树后序遍历为 [15, 7, 20]。
+
+递归构建左右子树即可。
+
+#+begin_src go
+func buildTree(inOrder, postOrder []int) *TreeNode {
+	inOrderIndexMap := make(map[int]int)
+	postOrderIndexMap := make(map[int]int)
+	for i, v := range inOrder {
+		inOrderIndexMap[v] = i
+	}
+	for i, v := range postOrder {
+		postOrderIndexMap[v] = i
+	}
+	var build func(inStart, inEnd, postStart, postEnd int) *TreeNode
+	build = func(inStart, inEnd, postStart, postEnd int) *TreeNode {
+		if inStart > inEnd {
+			return nil
+		}
+		root := &TreeNode{Val: postOrder[postEnd]}
+		inOrderRootIndex := inOrderIndexMap[root.Val]
+		leftSize := inOrderRootIndex - inStart
+		root.Left = build(inStart, inOrderRootIndex-1, postStart, postStart+leftSize-1)
+		root.Right = build(inOrderRootIndex+1, inEnd, postStart+leftSize, postEnd-1)
+		return root
+	}
+	return build(0, len(inOrder)-1, 0, len(postOrder)-1)
+}
+#+end_src

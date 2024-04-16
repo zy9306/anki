@@ -1,0 +1,134 @@
+# -*- mode: Org; buffer-read-only: nil; org-download-image-dir: "img"-*-
+
+# local variables:
+# eval: (anki-editor-mode +1)
+# end:
+
+* 116. Populating Next Right Pointers in Each Node
+:PROPERTIES:
+:ANKI_DECK: leetcode
+:ANKI_NOTE_TYPE: Basic
+:ANKI_TAGS: algorithm tree
+:ANKI_NOTE_ID: 1712137412290
+:END:
+
+** Front
+
+[[https://leetcode.com/problems/populating-next-right-pointers-in-each-node/description/][116. Populating Next Right Pointers in Each Node]]
+
+给定一个 完美二叉树 ，其所有叶子节点都在同一层，每个父节点都有两个子节点。二叉树定义如下：
+
+#+begin_src c
+struct Node {
+  int val;
+  Node *left;
+  Node *right;
+  Node *next;
+}
+#+end_src
+
+填充它的每个 next 指针，让这个指针指向其下一个右侧节点。如果找不到下一个右侧节点，则将 next 指针设置为 NULL。
+
+初始状态下，所有 next 指针都被设置为 NULL
+
+示例1:
+
+
+#+DOWNLOADED: screenshot @ 2024-04-03 16:25:10
+[[file:img/2024-04-03_16-25-10_screenshot.png]]
+
+
+输入：root = [1,2,3,4,5,6,7]
+输出：[1,#,2,3,#,4,5,6,7,#]
+解释：给定二叉树如图 A 所示，你的函数应该填充它的每个 next 指针，以指向其下一个右侧节点，如图 B 所示。序列化的输出按层序遍历排列，同一层节点由 next 指针连接，'#' 标志着每一层的结束。
+
+示例 2:
+
+输入：root = []
+输出：[]
+
+提示：
+
+- 树中节点的数量在 [0, 212 - 1] 范围内
+- -1000 <= node.val <= 1000
+
+进阶：
+
+- 你只能使用常量级额外空间。
+- 使用递归解题也符合要求，本题中递归程序占用的栈空间不算做额外的空间复杂度。
+
+
+** Back
+
+*** 通过层序遍历将每一层的节点连接起来
+
+#+begin_src go
+type Node struct {
+	Val   int
+	Left  *Node
+	Right *Node
+	Next  *Node
+}
+
+func connect(root *Node) *Node {
+	if root == nil {
+		return nil
+	}
+	queue := []*Node{root}
+	for len(queue) > 0 {
+		currentlevel := queue
+		queue = nil
+		nodeNum := len(currentlevel)
+		for i, node := range currentlevel {
+			if i+1 < nodeNum {
+				currentlevel[i].Next = currentlevel[i+1]
+			}
+			if node.Left != nil {
+				queue = append(queue, node.Left)
+			}
+			if node.Right != nil {
+				queue = append(queue, node.Right)
+			}
+		}
+	}
+	return root
+}
+
+#+end_src
+
+*** 从每一层的最左边开始连接
+
+假设 root 的左右子树已经连接好了，即 root.Left.Next = root.Right，从第二层开始，我们可以通过已经连接好的上一层来连接下一层，即：
+
+#+begin_src
+#     1
+#    / \
+#   2   3
+#  / \ / \
+# 4  5 6  7
+
+node.Left.Next = node.Right
+if node.Next != nil {
+    node.Right.Next = node.Next.Left
+}
+
+# 5 和 6 是通过已连接的 2 和 3 连接起来的
+
+#+end_src
+
+#+begin_src go
+func connect(root *Node) *Node {
+	if root == nil {
+		return nil
+	}
+	for leftmose := root; leftmose.Left != nil; leftmose = leftmose.Left {
+		for node := leftmose; node != nil; node = node.Next {
+			node.Left.Next = node.Right
+			if node.Next != nil {
+				node.Right.Next = node.Next.Left
+			}
+		}
+	}
+	return root
+}
+#+end_src

@@ -1,0 +1,103 @@
+# -*- mode: Org; buffer-read-only: nil; org-download-image-dir: "img"-*-
+
+# local variables:
+# eval: (anki-editor-mode +1)
+# end:
+
+* 226. Invert Binary Tree
+:PROPERTIES:
+:ANKI_DECK: leetcode
+:ANKI_NOTE_TYPE: Basic
+:ANKI_TAGS: algorithm tree
+:ANKI_NOTE_ID: 1712132268019
+:END:
+
+** Front
+
+[[https://leetcode.com/problems/invert-binary-tree/][226. Invert Binary Tree]]
+
+Given the root of a binary tree, invert the tree, and return its root.
+
+Example 1:
+
+
+
+#+DOWNLOADED: screenshot @ 2024-04-03 14:36:30
+[[file:img/2024-04-03_14-36-30_screenshot.png]]
+
+
+Input: root = [4,2,7,1,3,6,9]
+Output: [4,7,2,9,6,3,1]
+
+
+Example 2:
+
+
+#+DOWNLOADED: screenshot @ 2024-04-03 14:37:08
+[[file:img/2024-04-03_14-37-08_screenshot.png]]
+
+
+Input: root = [2,1,3]
+Output: [2,3,1]
+
+Example 3:
+
+
+Input: root = []
+Output: []
+
+Constraints:
+
+- The number of nodes in the tree is in the range [0, 100].
+- -100 <= Node.val <= 100
+
+
+** Back
+
+1. 遍历每个节点，交换左右子树
+
+#+begin_src go
+import utils "github.com/zy9306/algorithm_utils"
+
+type TreeNode = utils.TreeNode
+
+var NewTreeNode = utils.NewTreeNode
+
+func invertTree(root *TreeNode) *TreeNode {
+	if root == nil {
+		return nil
+	}
+	root.Left, root.Right = root.Right, root.Left
+	invertTree(root.Left)
+	invertTree(root.Right)
+	return root
+}
+
+#+end_src
+
+2. 对左右子树进行翻转，然后交换左右子树
+
+#+begin_src go
+package main
+
+import utils "github.com/zy9306/algorithm_utils"
+
+type TreeNode = utils.TreeNode
+
+var NewTreeNode = utils.NewTreeNode
+
+func invertTree(root *TreeNode) *TreeNode {
+	if root == nil {
+		return nil
+	}
+	left := invertTree(root.Left)
+	right := invertTree(root.Right)
+	root.Left = right
+	root.Right = left
+	return root
+}
+
+#+end_src
+
+
+*** TOOD 非递归实现

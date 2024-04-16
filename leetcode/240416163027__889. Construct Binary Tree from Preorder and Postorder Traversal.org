@@ -1,0 +1,87 @@
+# -*- mode: Org; buffer-read-only: nil; org-download-image-dir: "img"-*-
+
+# local variables:
+# eval: (anki-editor-mode +1)
+# end:
+
+* 106. Construct Binary Tree from Inorder and Postorder Traversal
+:PROPERTIES:
+:ANKI_DECK: leetcode
+:ANKI_NOTE_TYPE: Basic
+:ANKI_TAGS: algorithm tree
+:ANKI_NOTE_ID: 1713257083242
+:END:
+
+** Front
+
+[[https://leetcode.com/problems/construct-binary-tree-from-preorder-and-postorder-traversal/description/][889. Construct Binary Tree from Preorder and Postorder Traversal]]
+
+给定两个整数数组，preorder 和 postorder ，其中 preorder 是一个具有 无重复 值的二叉树的前序遍历，postorder 是同一棵树的后序遍历，重构并返回二叉树。
+
+如果存在多个答案，您可以返回其中 任何 一个。
+
+示例 1：
+
+
+#+DOWNLOADED: screenshot @ 2024-04-16 16:33:32
+[[file:img/2024-04-16_16-33-32_screenshot.png]]
+
+
+输入：preorder = [1,2,4,5,3,6,7], postorder = [4,5,2,6,7,3,1]
+输出：[1,2,3,4,5,6,7]
+
+示例 2:
+
+输入: preorder = [1], postorder = [1]
+输出: [1]
+
+提示：
+
+- 1 <= preorder.length <= 30
+- 1 <= preorder[i] <= preorder.length
+- preorder 中所有值都 不同
+- postorder.length == preorder.length
+- 1 <= postorder[i] <= postorder.length
+- postorder 中所有值都 不同
+- 保证 preorder 和 postorder 是同一棵二叉树的前序遍历和后序遍历
+
+
+** Back
+
+先确定根节点，root=1，假设 preorder[1] 即 2 为左子树的根节点，则：
+
+左子树 preorder 为 [2,4,5]，postorder 为 [4,5,2]
+
+右子树 preorder 为 [3,6,7]，postorder 为 [6,7,3]
+
+递归构建左右子树即可。
+
+#+begin_src go
+func constructFromPrePost(preOrder, postOrder []int) *TreeNode {
+	preOrderIndexMap := make(map[int]int)
+	postOrderIndexMap := make(map[int]int)
+	for i, v := range preOrder {
+		preOrderIndexMap[v] = i
+	}
+	for i, v := range postOrder {
+		postOrderIndexMap[v] = i
+	}
+	var build func(preStart, preEnd, postStart, postEnd int) *TreeNode
+	build = func(preStart, preEnd, postStart, postEnd int) *TreeNode {
+		if preStart > preEnd {
+			return nil
+		}
+		if preStart == preEnd {
+			return &TreeNode{Val: preOrder[preStart]}
+		}
+		root := &TreeNode{Val: preOrder[preStart]}
+		// 这里假设 preOrder[preStart+1] 是左子树的根节点
+		leftSize := postOrderIndexMap[preOrder[preStart+1]] - postStart + 1
+		root.Left = build(preStart+1, preStart+leftSize, postStart, postStart+leftSize-1)
+		root.Right = build(preStart+leftSize+1, preEnd, postStart+leftSize, postEnd-1)
+		return root
+	}
+	return build(0, len(preOrder)-1, 0, len(postOrder)-1)
+}
+#+end_src
+

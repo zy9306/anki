@@ -1,0 +1,252 @@
+# -*- mode: Org; buffer-read-only: nil; org-download-image-dir: "img"-*-
+
+# local variables:
+# eval: (anki-editor-mode +1)
+# end:
+
+* 931  Minimum Falling Path Sum
+:PROPERTIES:
+:ANKI_DECK: leetcode
+:ANKI_NOTE_TYPE: Basic
+:ANKI_TAGS: algorithm dynamic-programming
+:ANKI_NOTE_ID: 1710599738033
+:END:
+
+** Front
+
+[[https://leetcode.com/problems/minimum-falling-path-sum/][931  Minimum Falling Path Sum]]
+
+Given an n x n array of integers matrix, return the minimum sum of any falling path through matrix.
+
+A falling path starts at any element in the first row and chooses the element in the next row that is either
+directly below or diagonally left/right. Specifically, the next element from position (row, col) will be (row + 1,
+col - 1), (row + 1, col), or (row + 1, col + 1).
+
+
+#+DOWNLOADED: screenshot @ 2024-03-15 12:56:50
+[[file:img/2024-03-15_12-56-50_screenshot.png]]
+
+Constraints:
+#+begin_src
+n == matrix.length == matrix[i].length
+1 <= n <= 100
+-100 <= matrix[i][j] <= 100
+#+end_src
+
+
+** Back
+
+不管是哪种方式，总是通过移动 j 向上或向下以覆盖所有情况，因此 main 中的 for 循环变量都是 j
+
+*** 从左下角往上计算
+
+定义 dp[i][j] 为落到 matrix[i][j] 的最小路径和
+
+落到 matrix[i][j] 之前的位置以以下可能
+
+- matrix[i-1][j]
+- matrix[i-1][j-1]
+- matrix[i-1][j+1]
+
+因此
+
+dp[i][j] = matrix[i][j] + min(dp[i-1][j], dp[i-1][j-1], dp[i-1][j+1])
+
+递归实现如下：
+
+#+begin_src go
+package main
+
+import (
+	"fmt"
+	"math"
+
+	"golang.org/x/exp/constraints"
+)
+
+func min[T constraints.Integer](input ...T) T {
+	rv := input[0]
+	for _, v := range input {
+		if v < rv {
+			rv = v
+		}
+	}
+	return rv
+}
+
+func minFallingPathSum(matrix [][]int, i, j int, dp [][]int) int {
+	if i < 0 || j < 0 || j >= len(matrix[0]) {
+		return math.MaxInt
+	}
+	if dp[i][j] != math.MaxInt {
+		return dp[i][j]
+	}
+	if i == 0 {
+		dp[i][j] = matrix[i][j]
+	} else {
+		dp[i][j] = matrix[i][j] + min(
+			minFallingPathSum(matrix, i-1, j-1, dp),
+			minFallingPathSum(matrix, i-1, j, dp),
+			minFallingPathSum(matrix, i-1, j+1, dp),
+		)
+	}
+	return dp[i][j]
+}
+
+func main() {
+	input := [][]int{{2, 1, 3}, {6, 5, 4}, {7, 8, 9}}
+	iMax := len(input)
+	jMax := len(input[0])
+	dp := make([][]int, iMax)
+	for i := range dp {
+		dp[i] = make([]int, jMax)
+		for j := range dp[i] {
+			dp[i][j] = math.MaxInt
+		}
+	}
+	result := math.MaxInt
+	for j := 0; j < jMax; j++ {
+		result = min(result, minFallingPathSum(input, iMax-1, j, dp))
+	}
+	fmt.Println(result)
+}
+#+end_src
+
+*** 从左上角开始往下计算
+
+定义一个 dp 函数
+
+~func dp(matrix [][]int, i, j, int) int~
+
+表示从 matrix[i][j] 开始下落的路径和，base 情况就是 matrix[i][j] 在最后一行时，此时路径就是 matrix[i][j]
+
+dp[i][j] = matrix[i][j] + min(dp[i+1][j], dp[i+1][j-1], dp[i+1][j+1])
+
+实现如下：
+#+begin_src go
+package main
+
+import (
+	"fmt"
+	"math"
+
+	"golang.org/x/exp/constraints"
+)
+
+func min[T constraints.Integer](input ...T) T {
+	rv := input[0]
+	for _, v := range input {
+		if v < rv {
+			rv = v
+		}
+	}
+	return rv
+}
+
+func minFallingPathSum(matrix [][]int, i, j int, dp [][]int) int {
+	if i >= len(matrix) || j < 0 || j >= len(matrix[0]) {
+		return math.MaxInt
+	}
+	if dp[i][j] != math.MaxInt {
+		return dp[i][j]
+	}
+	if i == len(matrix)-1 {
+		dp[i][j] = matrix[i][j]
+	} else {
+		dp[i][j] = matrix[i][j] + min(
+			minFallingPathSum(matrix, i+1, j-1, dp),
+			minFallingPathSum(matrix, i+1, j, dp),
+			minFallingPathSum(matrix, i+1, j+1, dp),
+		)
+	}
+	return dp[i][j]
+}
+
+func main() {
+	input := [][]int{{2, 1, 3}, {6, 5, 4}, {7, 8, 9}}
+	iMax := len(input)
+	jMax := len(input[0])
+	dp := make([][]int, iMax)
+	for i := range dp {
+		dp[i] = make([]int, jMax)
+		for j := range dp[i] {
+			dp[i][j] = math.MaxInt
+		}
+	}
+	result := math.MaxInt
+	for j := 0; j < jMax; j++ {
+		result = min(result, minFallingPathSum(input, 0, j, dp))
+	}
+	fmt.Println(result)
+}
+#+end_src
+
+*** 非递归实现
+
+**** dp[i][j] = matrix[i][j] + min(dp[i+1][j], dp[i+1][j-1], dp[i+1][j+1])
+
+dp[rowMax][col] 为 matrix[rowMax][col]
+
+所以 dp[rowMax-1][col] 为 matrix[rowMax-1][col] + dp[rowMax][col]
+
+...
+
+一直向上迭代到 row0
+
+#+begin_src go
+package main
+
+import (
+	"fmt"
+	"math"
+
+	"golang.org/x/exp/constraints"
+)
+
+func min[T constraints.Integer](input ...T) T {
+	rv := input[0]
+	for _, v := range input {
+		if v < rv {
+			rv = v
+		}
+	}
+	return rv
+}
+
+func minFallingPathSum(matrix [][]int) int {
+	rowMax := len(matrix)
+	colMax := len(matrix[0])
+	dp := make([][]int, rowMax)
+	for i := range dp {
+		dp[i] = make([]int, colMax)
+		copy(dp[i], matrix[i])
+	}
+
+	for i := rowMax - 1; i >= 0; i-- {
+		for j := 0; j < colMax; j++ {
+			dpIJ := dp[i][j]
+			if j > 0 {
+				dpIJ = min(dpIJ, dp[i][j-1])
+			}
+			if j < colMax-1 {
+				dpIJ = min(dpIJ, dp[i][j+1])
+			}
+			if i > 0 {
+				dp[i-1][j] += dpIJ
+			}
+		}
+	}
+	result := math.MaxInt
+	for j := 0; j < colMax; j++ {
+		result = min(result, dp[0][j])
+	}
+	return result
+}
+
+func main() {
+	matrix := [][]int{{2, 1, 3}, {6, 5, 4}, {7, 8, 9}}
+	result := minFallingPathSum(matrix)
+	fmt.Println(result)
+}
+
+#+end_src

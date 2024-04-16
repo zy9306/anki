@@ -1,0 +1,117 @@
+# -*- mode: Org; buffer-read-only: nil; org-download-image-dir: "img"-*-
+
+# local variables:
+# eval: (anki-editor-mode +1)
+# end:
+
+* 312. Burst Balloons
+:PROPERTIES:
+:ANKI_DECK: leetcode
+:ANKI_NOTE_TYPE: Basic
+:ANKI_TAGS: algorithm dynamic-programming
+:ANKI_NOTE_ID: 1712024038286
+:END:
+
+** Front
+
+[[https://leetcode.com/problems/burst-balloons][312. Burst Balloons]]
+
+有 n 个气球，编号为0 到 n - 1，每个气球上都标有一个数字，这些数字存在数组 nums 中。
+
+现在要求你戳破所有的气球。戳破第 i 个气球，你可以获得 nums[i - 1] *
+nums[i] * nums[i + 1] 枚硬币。 这里的 i - 1 和 i + 1 代表和 i 相邻的两
+个气球的序号。如果 i - 1或 i + 1 超出了数组的边界，那么就当它是一个数
+字为 1 的气球。
+
+求所能获得硬币的最大数量。
+
+示例 1：
+
+输入：nums = [3,1,5,8]
+输出：167
+解释：
+nums = [3,1,5,8] --> [3,5,8] --> [3,8] --> [8] --> []
+coins = 3*1*5 + 3*5*8 + 1*3*8 + 1*8*1 = 167
+
+示例 2：
+
+输入：nums = [1,5]
+输出：10
+
+
+提示：
+
+- n == nums.length
+- 1 <= n <= 300
+- 0 <= nums[i] <= 100
+
+
+** Back
+
+定义 dp[i][j] 为戳破闭区间 [i, j] 之间的所有气球能得到的最多硬币，其中 i，j 表示第 i 个气球和第 j 个气球。
+
+考虑最后戳破的气球是哪一个，假设是第 k 个气球，那么就有：
+
+#+begin_src
+i ... k-1, k, k+1 ... j
+#+end_src
+
+dp[i][j] = dp[i][k-1] + dp[k+1][j] + nums[i-1-1] * nums[k-1] * nums[j]
+
+最终要得到 dp[1][n]，其中 n 是气球的个数。
+
+如果按以下迭代：
+
+#+begin_src
+for i in 1..n:
+    for j in i..n:
+        for k in i..j:
+#+end_src
+
+由于 k 比 i 大，会导致 dp[k+1][j] 还没有计算，由于 k 比 j 小，会导致 dp[i][k-1] 还没有计算。
+
+所以要改变迭代顺序，让 i 从 大的值开始遍历，j 从小的值开始遍历：
+
+#+begin_src
+for i in n..1:
+    for j in i..n:
+        for k in i..j:
+#+end_src
+
+
+这样就能保证 dp[i][k-1] 和 dp[k+1][j] 都是已经计算过的。
+
+#+begin_src go
+package main
+
+import "fmt"
+
+func maxCoins(nums []int) int {
+	n := len(nums)
+	dp := make([][]int, n+2)
+	for i := range dp {
+		dp[i] = make([]int, n+2)
+	}
+
+	var getNum = func(i int) int {
+		if i < 0 || i >= n {
+			return 1
+		}
+		return nums[i]
+	}
+	for i := n; i >= 1; i-- {
+		for j := i; j <= n; j++ {
+			for k := i; k <= j; k++ {
+				dp[i][j] = max(dp[i][j], dp[i][k-1]+dp[k+1][j]+getNum(i-1-1)*getNum(k-1)*getNum(j))
+			}
+		}
+	}
+	return dp[1][n]
+}
+
+func main() {
+	fmt.Println(maxCoins([]int{3, 1, 5, 8}))
+	fmt.Println(maxCoins([]int{1, 5}))
+}
+
+#+end_src
